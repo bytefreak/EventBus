@@ -46,4 +46,7 @@ public struct Options: OptionSet {
     
     /// Print a log of emitted events for a given event bus.
     public static let logEvents = Options(rawValue: 1 << 2)
+    
+    /// Instead of sending the notification asynchronous, use synchronous dispatching
+    public static let notifySynchronous = Options(rawValue: 1 << 3)
 }

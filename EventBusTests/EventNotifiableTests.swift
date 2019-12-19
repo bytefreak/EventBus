@@ -107,4 +107,75 @@ class EventNotifiableTests: XCTestCase {
 
         self.waitForExpectations(timeout: 1.0)
     }
+    
+    func testNotifySynchronousMainFromMain() {
+        let eventBus = EventBus(notificationQueue: DispatchQueue.main)
+
+        let expectation = self.expectation(description: "")
+        let fooMock = FooMock { _ in expectation.fulfill() }
+        
+        eventBus.add(subscriber: fooMock, for: FooMockable.self)
+        // call from main
+        eventBus.notify(FooMockable.self,options: .notifySynchronous) { (s) in
+            Thread.sleep(forTimeInterval: 1)
+            s.foo()
+        }
+        
+        self.waitForExpectations(timeout: 0.1)
+    }
+    
+    func testNotifySynchronousMainFromBackground() {
+        let q = DispatchQueue.global(qos: .background)
+        let eventBus = EventBus(notificationQueue: DispatchQueue.main)
+
+        let expectation = self.expectation(description: "")
+        let fooMock = FooMock { _ in expectation.fulfill() }
+        
+        eventBus.add(subscriber: fooMock, for: FooMockable.self)
+        // call from main
+        _ = q.sync {
+            eventBus.notify(FooMockable.self,options: .notifySynchronous) { (s) in
+                Thread.sleep(forTimeInterval: 1)
+                s.foo()
+            }
+        }
+        
+        self.waitForExpectations(timeout: 0.1)
+    }
+
+    func testNotifySynchronousBackgroundFromMain() {
+        let q = DispatchQueue.global(qos: .background)
+        let eventBus = EventBus(notificationQueue: q)
+
+        let expectation = self.expectation(description: "")
+        let fooMock = FooMock { _ in expectation.fulfill() }
+        
+        eventBus.add(subscriber: fooMock, for: FooMockable.self)
+        // call from main
+        eventBus.notify(FooMockable.self,options: .notifySynchronous) { (s) in
+            Thread.sleep(forTimeInterval: 1)
+            s.foo()
+        }
+        
+        self.waitForExpectations(timeout: 0.1)
+    }
+    
+    func testNotifySynchronousBackgroundFromBackground() {
+        let q = DispatchQueue.global(qos: .background)
+        let eventBus = EventBus(notificationQueue: q)
+
+        let expectation = self.expectation(description: "")
+        let fooMock = FooMock { _ in expectation.fulfill() }
+        
+        eventBus.add(subscriber: fooMock, for: FooMockable.self)
+        // call from main
+        _ = q.sync {
+            eventBus.notify(FooMockable.self,options: .notifySynchronous) { (s) in
+                Thread.sleep(forTimeInterval: 1)
+                s.foo()
+            }
+        }
+        
+        self.waitForExpectations(timeout: 0.1)
+    }
 }

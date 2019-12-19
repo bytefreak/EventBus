@@ -249,8 +249,18 @@ extension EventBus: EventNotifiable {
             // Notify our direct subscribers:
             if let subscribers = self.subscribed[identifier] {
                 for subscriber in subscribers.lazy.compactMap({ $0.inner as? T }) {
-                    self.notificationQueue.async {
-                        closure(subscriber)
+                    if options.contains(.notifySynchronous) {
+                        if Thread.isMainThread && self.notificationQueue == DispatchQueue.main {
+                            closure(subscriber)                            
+                        } else {
+                            self.notificationQueue.sync {
+                                closure(subscriber)
+                            }
+                        }
+                    }else{
+                        self.notificationQueue.async {
+                            closure(subscriber)
+                        }
                     }
                 }
                 handled += subscribers.count
